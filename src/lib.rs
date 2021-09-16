@@ -1,6 +1,7 @@
 use crate::resources::Resources;
 use std::any::Any;
 
+mod entities;
 mod resources;
 
 #[derive(Default, Debug)]
