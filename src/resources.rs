@@ -20,6 +20,15 @@ impl Resources {
             None
         }
     }
+
+    pub fn get_mut<T: Any>(&mut self) -> Option<&mut T> {
+        let type_id = TypeId::of::<T>();
+        if let Some(data) = self.data.get_mut(&type_id) {
+            data.downcast_mut()
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]
@@ -29,7 +38,7 @@ mod test {
 
     #[test]
     fn add_resource() {
-        let resources = initialize_resource();
+        let resources = initialize_resources();
         let stored_resource = resources.data.get(&TypeId::of::<WorldWidth>()).unwrap();
         let extracted_world_width = stored_resource.downcast_ref::<WorldWidth>().unwrap();
 
@@ -38,13 +47,24 @@ mod test {
 
     #[test]
     fn get_resource() {
-        let resources = initialize_resource();
+        let resources = initialize_resources();
         if let Some(extracted_world_width) = resources.get_ref::<WorldWidth>() {
             assert_eq!(extracted_world_width.0, 100.0);
         }
     }
 
-    fn initialize_resource() -> Resources {
+    #[test]
+    fn get_resource_mutably() {
+        let mut resources = initialize_resources();
+        {
+            let world_width: &mut WorldWidth = resources.get_mut::<WorldWidth>().unwrap();
+            world_width.0 += 10.0;
+        }
+        let world_width = resources.get_ref::<WorldWidth>().unwrap();
+        assert_eq!(world_width.0, 110.0);
+    }
+
+    fn initialize_resources() -> Resources {
         let mut resources = Resources::default();
         let world_width = WorldWidth(100.0);
 
