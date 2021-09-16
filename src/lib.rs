@@ -13,10 +13,32 @@ impl World {
         Self::default()
     }
 
+    /**
+    Add a resource to the world.
+    The only restriction is that the resource type implements the Any trait.
+    ```
+    use ezs::World;
+    let mut world = World::new();
+    world.add_resource(10_u32);
+    assert_eq!(*world.get_resource::<u32>().unwrap(), 10);
+    ```
+     */
     pub fn add_resource(&mut self, resource_data: impl Any) {
         self.resources.add(resource_data);
     }
 
+    /**
+    Query for a resource and get a reference to it.
+    ```
+    use ezs::World;
+
+    let mut world = World::new();
+    world.add_resource(10_u32);
+
+    let resource = world.get_resource::<u32>().unwrap();
+    assert_eq!(*resource, 10);
+    ```
+     */
     pub fn get_resource<T: Any>(&self) -> Option<&T> {
         self.resources.get_ref::<T>()
     }
@@ -40,6 +62,11 @@ impl World {
     */
     pub fn get_resource_mut<T: Any>(&mut self) -> Option<&mut T> {
         self.resources.get_mut::<T>()
+    }
+
+    ///Remove a resource from the world.
+    pub fn delete_resource<T: Any>(&mut self) {
+        self.resources.remove::<T>();
     }
 }
 

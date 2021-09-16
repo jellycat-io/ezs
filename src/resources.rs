@@ -29,6 +29,11 @@ impl Resources {
             None
         }
     }
+
+    pub fn remove<T: Any>(&mut self) {
+        let type_id = TypeId::of::<T>();
+        self.data.remove(&type_id);
+    }
 }
 
 #[cfg(test)]
@@ -62,6 +67,14 @@ mod test {
         }
         let world_width = resources.get_ref::<WorldWidth>().unwrap();
         assert_eq!(world_width.0, 110.0);
+    }
+
+    #[test]
+    fn remove_resource() {
+        let mut resources = initialize_resources();
+        resources.remove::<WorldWidth>();
+        let world_width_type_id = TypeId::of::<WorldWidth>();
+        assert!(!resources.data.contains_key(&world_width_type_id));
     }
 
     fn initialize_resources() -> Resources {
