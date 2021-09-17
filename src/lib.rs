@@ -119,7 +119,7 @@ impl World {
     }
 
     pub fn query(&self) -> Query {
-        Query::default()
+        Query::new(&self.entities)
     }
 }
 
