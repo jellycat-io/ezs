@@ -1,3 +1,4 @@
+use crate::entities::Entities;
 use crate::resources::Resources;
 use std::any::Any;
 
@@ -7,6 +8,7 @@ mod resources;
 #[derive(Default, Debug)]
 pub struct World {
     resources: Resources,
+    entities: Entities,
 }
 
 impl World {
@@ -68,6 +70,14 @@ impl World {
     ///Remove a resource from the world.
     pub fn delete_resource<T: Any>(&mut self) {
         self.resources.remove::<T>();
+    }
+
+    pub fn register_component<T: Any + 'static>(&mut self) {
+        self.entities.register_component::<T>();
+    }
+
+    pub fn create_entity(&mut self) -> &mut Entities {
+        self.entities.create_entity()
     }
 }
 
