@@ -11,6 +11,7 @@ pub mod query;
 pub struct Entities {
     components: HashMap<TypeId, Vec<Option<Rc<RefCell<dyn Any>>>>>,
     bit_masks: HashMap<TypeId, u32>,
+    map: Vec<u32>,
 }
 
 impl Entities {
@@ -25,16 +26,22 @@ impl Entities {
         self.components
             .iter_mut()
             .for_each(|(_, components)| components.push(None));
+        self.map.push(0);
+
         self
     }
 
     pub fn with_component(&mut self, data: impl Any) -> Result<&mut Self> {
         let type_id = data.type_id();
+        let map_index = self.map.len() - 1;
         if let Some(components) = self.components.get_mut(&type_id) {
             let last_component = components
                 .last_mut()
                 .ok_or(EzsError::CreateEntityNeverCalled)?;
             *last_component = Some(Rc::new(RefCell::new(data)));
+
+            let bit_mask = self.bit_masks.get(&type_id).unwrap();
+            self.map[map_index] |= *bit_mask;
         } else {
             return Err(EzsError::ComponentNotRegistered.into());
         }
@@ -98,6 +105,26 @@ mod test {
         let borrowed_health = wrapped_health.borrow();
         let health = borrowed_health.downcast_ref::<Health>().unwrap();
         assert_eq!(health.0, 100);
+
+        Ok(())
+    }
+
+    #[test]
+    fn map_is_updated_when_creating_entities() -> Result<()> {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.register_component::<Speed>();
+        entities
+            .create_entity()
+            .with_component(Health(100))?
+            .with_component(Speed(16.0))?;
+
+        let entity_map = entities.map[0];
+        assert_eq!(entity_map, 3);
+
+        entities.create_entity().with_component(Speed(20.0))?;
+        let entity_map = entities.map[1];
+        assert_eq!(entity_map, 2);
 
         Ok(())
     }
