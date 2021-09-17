@@ -1,8 +1,5 @@
 use eyre::Result;
 use ezs::World;
-use std::any::Any;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 #[test]
 fn create_entity() -> Result<()> {
@@ -31,6 +28,10 @@ fn query_for_entities() -> Result<()> {
         .with_component(Size(10.0))?;
     world.create_entity().with_component(Size(32.0))?;
     world.create_entity().with_component(Location(20.0, 80.0))?;
+    world
+        .create_entity()
+        .with_component(Location(32.0, 128.0))?
+        .with_component(Size(20.0))?;
 
     let query = world
         .query()
@@ -54,11 +55,12 @@ fn query_for_entities() -> Result<()> {
 
     let borrowed_second_location = locations[1].borrow();
     let second_location = borrowed_second_location.downcast_ref::<Location>().unwrap();
-    assert_eq!(second_location.0, 20.0);
+    assert_eq!(second_location.0, 32.0);
 
-    let borrowed_second_size = sizes[1].borrow();
-    let second_size = borrowed_second_size.downcast_ref::<Size>().unwrap();
-    assert_eq!(second_size.0, 32.0);
+    let mut borrowed_second_size = sizes[1].borrow_mut();
+    let second_size = borrowed_second_size.downcast_mut::<Size>().unwrap();
+    second_size.0 += 10.0;
+    assert_eq!(second_size.0, 30.0);
 
     Ok(())
 }
