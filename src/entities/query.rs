@@ -1,9 +1,11 @@
 use super::Entities;
-use crate::ezs_errors::EzsError;
+use crate::entities::Component;
+use crate::errors::JellyEcsError;
 use eyre::Result;
 use std::any::{Any, TypeId};
-use std::cell::RefCell;
-use std::rc::Rc;
+
+pub type QueryIndexes = Vec<usize>;
+pub type QueryComponents = Vec<Vec<Component>>;
 
 #[derive(Debug)]
 pub struct Query<'a> {
@@ -27,13 +29,13 @@ impl<'a> Query<'a> {
             self.map |= bit_mask;
             self.type_ids.push(type_id);
         } else {
-            return Err(EzsError::ComponentNotRegistered.into());
+            return Err(JellyEcsError::ComponentNotRegistered.into());
         }
 
         Ok(self)
     }
 
-    pub fn run(&self) -> (Vec<usize>, Vec<Vec<Rc<RefCell<dyn Any>>>>) {
+    pub fn run(&self) -> (QueryIndexes, QueryComponents) {
         let indexes: Vec<usize> = self
             .entities
             .map

@@ -5,7 +5,7 @@ use eyre::Result;
 use std::any::Any;
 
 mod entities;
-pub mod ezs_errors;
+pub mod errors;
 mod resources;
 
 #[derive(Default, Debug)]
@@ -26,7 +26,7 @@ impl World {
     # Examples
 
     ```
-    use ezs::World;
+    use jelly_ecs::World;
     let mut world = World::new();
     world.add_resource(10_u32);
     # assert_eq!(*world.get_resource::<u32>().unwrap(), 10);
@@ -42,7 +42,7 @@ impl World {
     # Examples
 
     ```
-    use ezs::World;
+    use jelly_ecs::World;
 
     let mut world = World::new();
     world.add_resource(10_u32);
@@ -61,7 +61,7 @@ impl World {
     # Examples
 
     ```
-    use ezs::World;
+    use jelly_ecs::World;
 
     let mut world = World::new();
     world.add_resource(10_u32);
@@ -98,7 +98,7 @@ impl World {
 
     ```
     # use eyre::Result;
-    use ezs::World;
+    use jelly_ecs::World;
     # fn try_main() -> Result<()> {
     let mut world = World::new();
     world.register_component::<u32>();

@@ -1,4 +1,4 @@
-use crate::ezs_errors::EzsError;
+use crate::errors::JellyEcsError;
 use eyre::Result;
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
@@ -7,9 +7,12 @@ use std::rc::Rc;
 
 pub mod query;
 
+pub type Component = Rc<RefCell<dyn Any>>;
+pub type Components = HashMap<TypeId, Vec<Option<Component>>>;
+
 #[derive(Debug, Default)]
 pub struct Entities {
-    components: HashMap<TypeId, Vec<Option<Rc<RefCell<dyn Any>>>>>,
+    components: Components,
     bit_masks: HashMap<TypeId, u32>,
     map: Vec<u32>,
     inserting_into_index: usize,
@@ -24,13 +27,19 @@ impl Entities {
     }
 
     pub fn create_entity(&mut self) -> &mut Self {
-        if let Some((index, _)) = self.map.iter().enumerate().find(|(_, mask)| **mask == 0) {
+        if let Some((index, _)) = self
+            .map
+            .iter()
+            .enumerate()
+            .find(|(_index, mask)| **mask == 0)
+        {
             self.inserting_into_index = index;
         } else {
             self.components
                 .iter_mut()
                 .for_each(|(_, components)| components.push(None));
             self.map.push(0);
+            self.inserting_into_index = self.map.len() - 1;
         }
 
         self
@@ -42,13 +51,13 @@ impl Entities {
         if let Some(components) = self.components.get_mut(&type_id) {
             let component = components
                 .get_mut(index)
-                .ok_or(EzsError::CreateEntityNeverCalled)?;
+                .ok_or(JellyEcsError::CreateEntityNeverCalled)?;
             *component = Some(Rc::new(RefCell::new(data)));
 
             let bit_mask = self.bit_masks.get(&type_id).unwrap();
             self.map[index] |= *bit_mask;
         } else {
-            return Err(EzsError::ComponentNotRegistered.into());
+            return Err(JellyEcsError::ComponentNotRegistered.into());
         }
 
         Ok(self)
@@ -63,7 +72,7 @@ impl Entities {
         let mask = if let Some(mask) = self.bit_masks.get(&type_id) {
             mask
         } else {
-            return Err(EzsError::ComponentNotRegistered.into());
+            return Err(JellyEcsError::ComponentNotRegistered.into());
         };
 
         self.map[index] ^= *mask;
@@ -75,7 +84,7 @@ impl Entities {
         let mask = if let Some(mask) = self.bit_masks.get(&data.type_id()) {
             mask
         } else {
-            return Err(EzsError::ComponentNotRegistered.into());
+            return Err(JellyEcsError::ComponentNotRegistered.into());
         };
 
         self.map[index] |= *mask;
@@ -90,7 +99,7 @@ impl Entities {
         if let Some(map) = self.map.get_mut(index) {
             *map = 0;
         } else {
-            return Err(EzsError::EntityDoesNotExist.into());
+            return Err(JellyEcsError::EntityDoesNotExist.into());
         }
 
         Ok(())
