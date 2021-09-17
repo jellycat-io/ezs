@@ -65,6 +65,21 @@ impl Entities {
 
         Ok(())
     }
+
+    pub fn add_component_by_entity_id(&mut self, data: impl Any, index: usize) -> Result<()> {
+        let mask = if let Some(mask) = self.bit_masks.get(&data.type_id()) {
+            mask
+        } else {
+            return Err(EzsError::ComponentNotRegistered.into());
+        };
+
+        self.map[index] |= *mask;
+
+        let components = self.components.get_mut(&data.type_id()).unwrap();
+        components[index] = Some(Rc::new(RefCell::new(data)));
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -159,6 +174,29 @@ mod tests {
         entities.delete_component_by_entity_id::<Health>(0)?;
 
         assert_eq!(entities.map[0], 2);
+        Ok(())
+    }
+
+    #[test]
+    #[allow(clippy::float_cmp)]
+    fn add_component_by_entity_id() -> Result<()> {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.register_component::<Speed>();
+        entities.create_entity().with_component(Health(100))?;
+
+        entities.add_component_by_entity_id(Speed(16.0), 0)?;
+
+        assert_eq!(entities.map[0], 3);
+
+        let speed_type_id = TypeId::of::<Speed>();
+        let wrapped_speeds = entities.components.get(&speed_type_id).unwrap();
+        let wrapped_speed = wrapped_speeds[0].as_ref().unwrap();
+        let borrowed_speed = wrapped_speed.borrow();
+        let speed = borrowed_speed.downcast_ref::<Speed>().unwrap();
+
+        assert_eq!(speed.0, 16.0);
+
         Ok(())
     }
 
