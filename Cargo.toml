@@ -1,7 +1,8 @@
 [package]
 name = "jelly_ecs"
-version = "1.0.0"
-description= "A basic ECS"
+version = "1.0.1"
+description= "A simple but functional ECS"
+repository="https://github.com/jellycat-io/jelly_ecs"
 license-file="LICENSE"
 authors = ["jellycat-io <max@jellycat.fr>"]
 edition = "2018"
