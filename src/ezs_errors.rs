@@ -6,4 +6,6 @@ pub enum EzsError {
     CreateEntityNeverCalled,
     #[error("Attempted to reference a component that wasn't registered")]
     ComponentNotRegistered,
+    #[error("Attempted to reference an entity that doesn't exist")]
+    EntityDoesNotExist,
 }

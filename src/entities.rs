@@ -80,6 +80,16 @@ impl Entities {
 
         Ok(())
     }
+
+    pub fn delete_entity_by_id(&mut self, index: usize) -> Result<()> {
+        if let Some(map) = self.map.get_mut(index) {
+            *map = 0;
+        } else {
+            return Err(EzsError::EntityDoesNotExist.into());
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -197,6 +207,16 @@ mod tests {
 
         assert_eq!(speed.0, 16.0);
 
+        Ok(())
+    }
+
+    #[test]
+    fn delete_entity_by_id() -> Result<()> {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.create_entity().with_component(Health(100))?;
+        entities.delete_entity_by_id(0)?;
+        assert_eq!(entities.map[0], 0);
         Ok(())
     }
 
