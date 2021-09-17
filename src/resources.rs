@@ -38,7 +38,7 @@ impl Resources {
 
 #[cfg(test)]
 #[allow(clippy::float_cmp)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

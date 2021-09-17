@@ -1,6 +1,7 @@
 use crate::entities::query::Query;
 use crate::entities::Entities;
 use crate::resources::Resources;
+use eyre::Result;
 use std::any::Any;
 
 mod entities;
@@ -84,7 +85,7 @@ impl World {
     }
 
     /// Registers a new empty component
-    pub fn register_component<T: Any + 'static>(&mut self) {
+    pub fn register_component<T: Any>(&mut self) {
         self.entities.register_component::<T>();
     }
 
@@ -120,6 +121,10 @@ impl World {
 
     pub fn query(&self) -> Query {
         Query::new(&self.entities)
+    }
+
+    pub fn delete_component_by_entity_id<T: Any>(&mut self, index: usize) -> Result<()> {
+        self.entities.delete_component_by_entity_id::<T>(index)
     }
 }
 

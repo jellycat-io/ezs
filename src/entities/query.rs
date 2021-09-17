@@ -33,7 +33,7 @@ impl<'a> Query<'a> {
         Ok(self)
     }
 
-    pub fn run(&self) -> Vec<Vec<Rc<RefCell<dyn Any>>>> {
+    pub fn run(&self) -> (Vec<usize>, Vec<Vec<Rc<RefCell<dyn Any>>>>) {
         let indexes: Vec<usize> = self
             .entities
             .map
@@ -51,7 +51,7 @@ impl<'a> Query<'a> {
         let mut result = vec![];
 
         for type_id in &self.type_ids {
-            let entity_components = self.entities.components.get(&type_id).unwrap();
+            let entity_components = self.entities.components.get(type_id).unwrap();
             let mut components_to_keep = vec![];
             for index in &indexes {
                 components_to_keep.push(entity_components[*index].as_ref().unwrap().clone());
@@ -60,7 +60,7 @@ impl<'a> Query<'a> {
             result.push(components_to_keep);
         }
 
-        result
+        (indexes, result)
     }
 }
 
@@ -102,13 +102,15 @@ mod test {
             .with_component(64.0_f32)?;
 
         let mut query = Query::new(&entities);
-        query.with_component::<u32>()?.with_component::<f32>()?;
+        let query_result = query
+            .with_component::<u32>()?
+            .with_component::<f32>()?
+            .run();
+        let u32s = &query_result.1[0];
+        let f32s = &query_result.1[1];
+        let indexes = &query_result.0;
 
-        let query_result = query.run();
-        let u32s = &query_result[0];
-        let f32s = &query_result[1];
-
-        assert_eq!(u32s.len(), f32s.len());
+        assert!(u32s.len() == f32s.len() && u32s.len() == indexes.len());
         assert_eq!(u32s.len(), 2);
 
         let borrowed_first_u32 = u32s[0].borrow();
@@ -126,6 +128,9 @@ mod test {
         let borrowed_second_f32 = f32s[1].borrow();
         let second_f32 = borrowed_second_f32.downcast_ref::<f32>().unwrap();
         assert_eq!(*second_f32, 64.0);
+
+        assert_eq!(indexes[0], 0);
+        assert_eq!(indexes[1], 3);
 
         Ok(())
     }
