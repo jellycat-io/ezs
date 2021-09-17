@@ -12,6 +12,7 @@ pub struct Entities {
     components: HashMap<TypeId, Vec<Option<Rc<RefCell<dyn Any>>>>>,
     bit_masks: HashMap<TypeId, u32>,
     map: Vec<u32>,
+    inserting_into_index: usize,
 }
 
 impl Entities {
@@ -23,25 +24,29 @@ impl Entities {
     }
 
     pub fn create_entity(&mut self) -> &mut Self {
-        self.components
-            .iter_mut()
-            .for_each(|(_, components)| components.push(None));
-        self.map.push(0);
+        if let Some((index, _)) = self.map.iter().enumerate().find(|(_, mask)| **mask == 0) {
+            self.inserting_into_index = index;
+        } else {
+            self.components
+                .iter_mut()
+                .for_each(|(_, components)| components.push(None));
+            self.map.push(0);
+        }
 
         self
     }
 
     pub fn with_component(&mut self, data: impl Any) -> Result<&mut Self> {
         let type_id = data.type_id();
-        let map_index = self.map.len() - 1;
+        let index = self.inserting_into_index;
         if let Some(components) = self.components.get_mut(&type_id) {
-            let last_component = components
-                .last_mut()
+            let component = components
+                .get_mut(index)
                 .ok_or(EzsError::CreateEntityNeverCalled)?;
-            *last_component = Some(Rc::new(RefCell::new(data)));
+            *component = Some(Rc::new(RefCell::new(data)));
 
             let bit_mask = self.bit_masks.get(&type_id).unwrap();
-            self.map[map_index] |= *bit_mask;
+            self.map[index] |= *bit_mask;
         } else {
             return Err(EzsError::ComponentNotRegistered.into());
         }
@@ -199,8 +204,7 @@ mod tests {
 
         assert_eq!(entities.map[0], 3);
 
-        let speed_type_id = TypeId::of::<Speed>();
-        let wrapped_speeds = entities.components.get(&speed_type_id).unwrap();
+        let wrapped_speeds = entities.components.get(&TypeId::of::<Speed>()).unwrap();
         let wrapped_speed = wrapped_speeds[0].as_ref().unwrap();
         let borrowed_speed = wrapped_speed.borrow();
         let speed = borrowed_speed.downcast_ref::<Speed>().unwrap();
@@ -217,6 +221,28 @@ mod tests {
         entities.create_entity().with_component(Health(100))?;
         entities.delete_entity_by_id(0)?;
         assert_eq!(entities.map[0], 0);
+        Ok(())
+    }
+
+    #[test]
+    fn created_entities_are_inserted_into_deleted_entities_columns() -> Result<()> {
+        let mut entities = Entities::default();
+        entities.register_component::<Health>();
+        entities.create_entity().with_component(Health(100))?;
+        entities.create_entity().with_component(Health(200))?;
+        entities.delete_entity_by_id(0)?;
+        entities.create_entity().with_component(Health(300))?;
+
+        assert_eq!(entities.map[0], 1);
+
+        let borrowed_health = entities.components.get(&TypeId::of::<Health>()).unwrap()[0]
+            .as_ref()
+            .unwrap()
+            .borrow();
+        let health = borrowed_health.downcast_ref::<Health>().unwrap();
+
+        assert_eq!(health.0, 300);
+
         Ok(())
     }
 
