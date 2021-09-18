@@ -1,5 +1,5 @@
 use eyre::Result;
-use jelly_ecs::World;
+use jecs::World;
 
 #[test]
 fn create_entity() -> Result<()> {

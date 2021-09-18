@@ -1,4 +1,4 @@
-use jelly_ecs::World;
+use jecs::World;
 use std::ops::Deref;
 
 #[test]
