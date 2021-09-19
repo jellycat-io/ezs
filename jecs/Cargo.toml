@@ -1,6 +1,6 @@
 [package]
 name = "jecs"
-version = "0.1.0"
+version = "0.1.1"
 description= "A simple but functional ECS"
 repository="https://github.com/jellycat-io/jecs"
 license-file="LICENSE"
