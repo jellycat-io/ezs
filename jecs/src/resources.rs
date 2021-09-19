@@ -7,6 +7,8 @@ pub struct Resources {
 }
 
 impl Resources {
+    pub fn new() -> Self { Self::default() }
+
     pub fn add(&mut self, data: impl Any) {
         let type_id = data.type_id();
         self.data.insert(type_id, Box::new(data));
@@ -78,7 +80,7 @@ mod tests {
     }
 
     fn initialize_resources() -> Resources {
-        let mut resources = Resources::default();
+        let mut resources = Resources::new();
         let world_width = WorldWidth(100.0);
 
         resources.add(world_width);

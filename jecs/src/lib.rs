@@ -16,7 +16,10 @@ pub struct World {
 
 impl World {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            resources: Resources::new(),
+            entities: Entities::new()
+        }
     }
 
     /**
