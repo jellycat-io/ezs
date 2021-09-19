@@ -19,6 +19,8 @@ pub struct Entities {
 }
 
 impl Entities {
+    pub fn new() -> Self { Self::default() }
+
     pub fn register_component<T: Any>(&mut self) {
         let type_id = TypeId::of::<T>();
         let bit_mask = 2u32.pow(self.bit_masks.len() as u32);
@@ -113,7 +115,7 @@ mod tests {
 
     #[test]
     fn register_entity() {
-        let mut entities = Entities::default();
+        let mut entities = Entities::new();
         entities.register_component::<Health>();
         let health_components = entities.components.get(&TypeId::of::<Health>()).unwrap();
         assert_eq!(health_components.len(), 0);
@@ -121,7 +123,7 @@ mod tests {
 
     #[test]
     fn bitmask_updated_when_registering_entities() {
-        let mut entities = Entities::default();
+        let mut entities = Entities::new();
         entities.register_component::<Health>();
         let mask = entities.bit_masks.get(&TypeId::of::<Health>()).unwrap();
         assert_eq!(*mask, 1);
@@ -133,7 +135,7 @@ mod tests {
 
     #[test]
     fn create_entity() {
-        let mut entities = Entities::default();
+        let mut entities = Entities::new();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
         entities.create_entity();
@@ -148,7 +150,7 @@ mod tests {
 
     #[test]
     fn with_component() -> Result<()> {
-        let mut entities = Entities::default();
+        let mut entities = Entities::new();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
         entities
@@ -167,7 +169,7 @@ mod tests {
 
     #[test]
     fn map_is_updated_when_creating_entities() -> Result<()> {
-        let mut entities = Entities::default();
+        let mut entities = Entities::new();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
         entities
@@ -187,7 +189,7 @@ mod tests {
 
     #[test]
     fn delete_component_by_entity_id() -> Result<()> {
-        let mut entities = Entities::default();
+        let mut entities = Entities::new();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
         entities
@@ -204,7 +206,7 @@ mod tests {
     #[test]
     #[allow(clippy::float_cmp)]
     fn add_component_by_entity_id() -> Result<()> {
-        let mut entities = Entities::default();
+        let mut entities = Entities::new();
         entities.register_component::<Health>();
         entities.register_component::<Speed>();
         entities.create_entity().with_component(Health(100))?;
@@ -225,7 +227,7 @@ mod tests {
 
     #[test]
     fn delete_entity_by_id() -> Result<()> {
-        let mut entities = Entities::default();
+        let mut entities = Entities::new();
         entities.register_component::<Health>();
         entities.create_entity().with_component(Health(100))?;
         entities.delete_entity_by_id(0)?;
@@ -235,7 +237,7 @@ mod tests {
 
     #[test]
     fn created_entities_are_inserted_into_deleted_entities_columns() -> Result<()> {
-        let mut entities = Entities::default();
+        let mut entities = Entities::new();
         entities.register_component::<Health>();
         entities.create_entity().with_component(Health(100))?;
         entities.create_entity().with_component(Health(200))?;

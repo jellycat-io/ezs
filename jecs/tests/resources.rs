@@ -1,5 +1,4 @@
 use jecs::World;
-use std::ops::Deref;
 
 #[test]
 fn create_and_get_resource_immutably() {
@@ -12,7 +11,7 @@ fn create_and_get_resource_immutably() {
 fn get_resource_mutably() {
     let mut world = initialize_world();
     {
-        let fps: &mut FPSResource = world.get_resource_mut::<FPSResource>().unwrap();
+        let fps = world.get_resource_mut::<FPSResource>().unwrap();
         fps.0 += 10;
     }
     let fps = world.get_resource::<FPSResource>().unwrap();
@@ -29,17 +28,15 @@ fn delete_resource() {
 
 fn initialize_world() -> World {
     let mut world = World::new();
-    world.add_resource(FPSResource(60));
+    world.add_resource(FPSResource::new(60));
     world
 }
 
 #[derive(Debug)]
 struct FPSResource(pub u32);
 
-impl Deref for FPSResource {
-    type Target = u32;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl FPSResource {
+    pub fn new(fps: u32) -> Self {
+        Self(fps)
     }
 }

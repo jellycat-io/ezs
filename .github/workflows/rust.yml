@@ -20,4 +20,5 @@ jobs:
       run: cargo build --release
     - uses: katyo/publish-crates@v1
       with:
+        path: "./jecs"
         registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
