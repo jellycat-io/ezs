@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Fix alsa-sys
+      run: apt install libasound2-dev
     - uses: actions/checkout@v2
     - name: Run tests
       run: cargo test
