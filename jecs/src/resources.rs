@@ -1,5 +1,6 @@
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[derive(Default, Debug)]
 pub struct Resources {
@@ -9,54 +10,43 @@ pub struct Resources {
 impl Resources {
     pub fn new() -> Self { Self::default() }
 
-    pub fn add(&mut self, data: impl Any) {
-        let type_id = data.type_id();
-        self.data.insert(type_id, Box::new(data));
+    pub fn add(&mut self, resource: impl Any) {
+        self.data.insert(resource.type_id(), Box::new(resource));
     }
 
     pub fn get_ref<T: Any>(&self) -> Option<&T> {
-        let type_id = TypeId::of::<T>();
-        if let Some(data) = self.data.get(&type_id) {
-            data.downcast_ref()
-        } else {
-            None
-        }
+        self.data.get(&TypeId::of::<T>())?.downcast_ref::<T>()
     }
 
     pub fn get_mut<T: Any>(&mut self) -> Option<&mut T> {
-        let type_id = TypeId::of::<T>();
-        if let Some(data) = self.data.get_mut(&type_id) {
-            data.downcast_mut()
-        } else {
-            None
-        }
+        self.data.get_mut(&TypeId::of::<T>())?.downcast_mut::<T>()
     }
 
     pub fn remove<T: Any>(&mut self) {
-        let type_id = TypeId::of::<T>();
-        self.data.remove(&type_id);
+        self.data.remove(&TypeId::of::<T>());
     }
 }
 
 #[cfg(test)]
-#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
 
     #[test]
     fn add_resource() {
         let resources = initialize_resources();
-        let stored_resource = resources.data.get(&TypeId::of::<WorldWidth>()).unwrap();
-        let extracted_world_width = stored_resource.downcast_ref::<WorldWidth>().unwrap();
-
-        assert_eq!(extracted_world_width.0, 100.0);
+        let health = resources.data
+            .get(&TypeId::of::<Health>())
+            .unwrap()
+            .downcast_ref::<Health>()
+            .unwrap();
+        assert_eq!(health.0, 100);
     }
 
     #[test]
     fn get_resource() {
         let resources = initialize_resources();
-        if let Some(extracted_world_width) = resources.get_ref::<WorldWidth>() {
-            assert_eq!(extracted_world_width.0, 100.0);
+        if let Some(health) = resources.get_ref::<Health>() {
+            assert_eq!(health.0, 100);
         }
     }
 
@@ -64,28 +54,34 @@ mod tests {
     fn get_resource_mutably() {
         let mut resources = initialize_resources();
         {
-            let world_width: &mut WorldWidth = resources.get_mut::<WorldWidth>().unwrap();
-            world_width.0 += 10.0;
+            let health = resources.get_mut::<Health>().unwrap();
+            health.0 += 10;
         }
-        let world_width = resources.get_ref::<WorldWidth>().unwrap();
-        assert_eq!(world_width.0, 110.0);
+        let health = resources.get_ref::<Health>().unwrap();
+        assert_eq!(health.0, 110);
     }
 
     #[test]
     fn remove_resource() {
         let mut resources = initialize_resources();
-        resources.remove::<WorldWidth>();
-        let world_width_type_id = TypeId::of::<WorldWidth>();
-        assert!(!resources.data.contains_key(&world_width_type_id));
+        resources.remove::<Health>();
+        assert!(!resources.data.contains_key(&TypeId::of::<Health>()));
     }
 
     fn initialize_resources() -> Resources {
         let mut resources = Resources::new();
-        let world_width = WorldWidth(100.0);
+        let health = Health::new(100);
 
-        resources.add(world_width);
+        resources.add(health);
         resources
     }
 
-    struct WorldWidth(pub f32);
+    #[derive(Debug)]
+    struct Health(pub u32);
+
+    impl Health {
+        pub fn new(health: u32) -> Self {
+            Self(health)
+        }
+    }
 }

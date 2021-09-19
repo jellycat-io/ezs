@@ -1,35 +1,23 @@
-use ggez::event::{self, EventHandler};
-use ggez::graphics::{self, Color, DrawMode, DrawParam, MeshBuilder};
-use ggez::{Context, ContextBuilder, GameError, GameResult};
+use zombie_simulator::MainState;
+use ggez::graphics::Color;
+use ggez::{ContextBuilder};
+use ggez::event::{self};
+use eyre::Result;
+use ggez::conf::WindowMode;
+use zombie_simulator::resources::arena_size::ArenaSize;
 
-fn main() {
-    let (mut ctx, event_loop) = ContextBuilder::new("zombie_simulator", "Jellycat Studio")
+fn main() -> Result<()> {
+    let window_mode = WindowMode::default().dimensions(1024.0, 1024.0);
+    let (mut ctx, event_loop) = ContextBuilder::new("zombie_simulator", "jellycat-io")
+        .window_mode(window_mode)
         .build()
-        .expect("Error creating GGEZ context");
-    let game = Game::new(&mut ctx);
+        .expect("Could not create ggez context");
 
-    event::run(ctx, event_loop, game);
-}
+    let arena_size = ArenaSize::new(1024.0, 1024.0);
+    let background_color = Color::from_rgb(29, 43, 83);
+    let entity_size = 15.0;
 
-struct Game {}
+    let main_state = MainState::new(arena_size, background_color, entity_size, &mut ctx)?;
 
-impl Game {
-    pub fn new(__ctx: &mut Context) -> Self {
-        Self {}
-    }
-}
-
-impl EventHandler<GameError> for Game {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
-        Ok(())
-    }
-
-    fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-        graphics::clear(ctx, Color::BLACK);
-        let mesh = MeshBuilder::new()
-            .circle(DrawMode::fill(), [50.0, 50.0], 50.0, 0.1, Color::WHITE)?
-            .build(ctx)?;
-        graphics::draw(ctx, &mesh, DrawParam::default())?;
-        graphics::present(ctx)
-    }
+    event::run(ctx, event_loop, main_state);
 }
