@@ -1,23 +1,29 @@
-use crate::components::speed::Speed;
-use crate::components::{acceleration::Acceleration, location::Location, velocity::Velocity};
-use crate::data_structures::vector2::Vector2;
-use crate::resources::fps::FPS;
-use crate::resources::{
-    arena_size::ArenaSize, background_color::BackgroundColor, clicked_location::ClickedLocation,
-    entity_mesh::EntityMesh, entity_size::EntitySize,
-};
-use crate::systems::contain_in_bounds::ContainInBounds;
-use crate::systems::randomly_walk::RandomlyWalk;
-use crate::systems::reset_acceleration::ResetAcceleration;
-use crate::systems::update_location::UpdateLocation;
-use crate::systems::{draw_entities::DrawEntities, update_velocity::UpdateVelocity};
 use eyre::Result;
 use ggez::event::EventHandler;
-use ggez::graphics::{self, Color};
+use ggez::graphics;
 use ggez::{Context, GameError, GameResult};
+
+use config::Config;
 use jecs::World;
 
+use crate::components::{
+    acceleration::Acceleration, location::Location, sight_range::SightRange, speed::Speed,
+    velocity::Velocity,
+};
+use crate::data_structures::vector2::Vector2;
+use crate::resources::{
+    background_color::BackgroundColor, clicked_location::ClickedLocation, entity_mesh::EntityMesh,
+    entity_size::EntitySize, fps::FPS,
+};
+use crate::systems::human_repulsion::HumanRepulsion;
+use crate::systems::{
+    contain_in_bounds::ContainInBounds, draw_entities::DrawEntities, randomly_walk::RandomlyWalk,
+    reset_acceleration::ResetAcceleration, update_location::UpdateLocation,
+    update_velocity::UpdateVelocity, visualize_sight_range::VisualizeSightRange,
+};
+
 pub mod components;
+pub mod config;
 pub mod data_structures;
 pub mod resources;
 pub mod systems;
@@ -28,38 +34,33 @@ pub struct MainState {
 }
 
 impl MainState {
-    pub fn new(
-        arena_size: ArenaSize,
-        background_color: Color,
-        entity_size: f32,
-        humans_count: u32,
-        target_fps: u32,
-        ctx: &mut Context,
-    ) -> Result<Self> {
+    pub fn new(config: Config, ctx: &mut Context) -> Result<Self> {
         let mut world = World::new();
-        let entity_size_resource = EntitySize::new(entity_size);
-        world.add_resource(arena_size);
-        world.add_resource(BackgroundColor(background_color));
+        let entity_size_resource = EntitySize::new(config.entity_size);
+        world.add_resource(config.arena_size);
+        world.add_resource(BackgroundColor(config.background_color));
         world.add_resource(ClickedLocation::new());
-        world.add_resource(EntityMesh::new(entity_size, ctx)?);
+        world.add_resource(EntityMesh::new(config.entity_size, ctx)?);
         world.add_resource(entity_size_resource);
-        world.add_resource(FPS(target_fps));
+        world.add_resource(FPS(config.target_fps));
 
         world.register_component::<Location>();
         world.register_component::<Velocity>();
         world.register_component::<Acceleration>();
         world.register_component::<Speed>();
+        world.register_component::<SightRange>();
 
-        for _ in 0..humans_count {
+        for _ in 0..config.humans_count {
             world
                 .create_entity()
                 .with_component(Location(Vector2::new_random_range(
                     entity_size_resource.half(),
-                    arena_size.width - entity_size_resource.half(),
+                    config.arena_size.width - entity_size_resource.half(),
                 )))?
                 .with_component(Velocity(Vector2::zero()))?
                 .with_component(Acceleration(Vector2::zero()))?
-                .with_component(Speed(0.3))?;
+                .with_component(Speed(config.human_speed))?
+                .with_component(SightRange(config.human_sight_range))?;
         }
 
         Ok(Self { world })
@@ -74,8 +75,9 @@ impl EventHandler<GameError> for MainState {
             RandomlyWalk::run(&self.world).unwrap();
             UpdateVelocity::run(&self.world).unwrap();
             UpdateLocation::run(&self.world).unwrap();
-            ContainInBounds::run(&self.world).unwrap();
             ResetAcceleration::run(&self.world).unwrap();
+            ContainInBounds::run(&self.world).unwrap();
+            HumanRepulsion::run(&self.world).unwrap();
         }
 
         Ok(())
@@ -87,8 +89,8 @@ impl EventHandler<GameError> for MainState {
             .get_resource::<BackgroundColor>()
             .expect("Could not find background color");
         graphics::clear(ctx, **bg_color);
-        let draw_entities = DrawEntities;
-        draw_entities.run(&self.world, ctx).unwrap();
+        DrawEntities::run(&self.world, ctx).unwrap();
+        VisualizeSightRange::run(&self.world, ctx).unwrap();
         graphics::present(ctx)
     }
 }

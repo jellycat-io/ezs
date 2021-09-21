@@ -4,3 +4,5 @@ pub mod randomly_walk;
 pub mod reset_acceleration;
 pub mod update_location;
 pub mod update_velocity;
+pub mod visualize_sight_range;
+pub mod human_repulsion;

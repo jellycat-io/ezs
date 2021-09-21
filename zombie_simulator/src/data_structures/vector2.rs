@@ -1,5 +1,6 @@
+use std::ops::{Add, AddAssign, MulAssign, Sub};
+
 use rand::{thread_rng, Rng};
-use std::ops::{Add, AddAssign, Sub};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vector2 {
@@ -24,11 +25,27 @@ impl Vector2 {
         Self { x, y }
     }
 
-    pub fn to_mint_vector2(&self) -> ggez::mint::Vector2<f32> {
+    pub fn to_mint_vector2(self) -> ggez::mint::Vector2<f32> {
         ggez::mint::Vector2 {
             x: self.x,
             y: self.y,
         }
+    }
+
+    /// Get the magnitude of the vector.
+    pub fn magnitude(&self) -> f32 {
+        (self.x.powi(2) + self.y.powi(2)).sqrt()
+    }
+
+    pub fn distance_to(&self, other: &Self) -> f32 {
+        (*self - other).magnitude()
+    }
+
+    /// Normalize the vector by setting its magnitude to 1
+    pub fn normalize(&mut self) {
+        let magnitude = self.magnitude();
+        self.x /= magnitude;
+        self.y /= magnitude;
     }
 
     pub fn reset(&mut self) {
@@ -46,7 +63,7 @@ impl Vector2 {
 }
 
 impl Add for Vector2 {
-    type Output = Vector2;
+    type Output = Self;
 
     fn add(self, other: Self) -> Self::Output {
         Self {
@@ -63,13 +80,20 @@ impl AddAssign for Vector2 {
     }
 }
 
-impl Sub for Vector2 {
+impl Sub<&Vector2> for Vector2 {
     type Output = Vector2;
 
-    fn sub(self, other: Self) -> Self::Output {
+    fn sub(self, other: &Vector2) -> Self::Output {
         Self {
             x: self.x - other.x,
             y: self.y - other.y,
         }
+    }
+}
+
+impl MulAssign<f32> for Vector2 {
+    fn mul_assign(&mut self, factor: f32) {
+        self.x *= factor;
+        self.y *= factor;
     }
 }
