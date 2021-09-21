@@ -1,3 +1,4 @@
+use crate::components::speed::Speed;
 use crate::components::{acceleration::Acceleration, location::Location, velocity::Velocity};
 use crate::data_structures::vector2::Vector2;
 use crate::resources::fps::FPS;
@@ -31,28 +32,35 @@ impl MainState {
         arena_size: ArenaSize,
         background_color: Color,
         entity_size: f32,
+        humans_count: u32,
         target_fps: u32,
         ctx: &mut Context,
     ) -> Result<Self> {
         let mut world = World::new();
+        let entity_size_resource = EntitySize::new(entity_size);
         world.add_resource(arena_size);
         world.add_resource(BackgroundColor(background_color));
         world.add_resource(ClickedLocation::new());
-        world.add_resource(EntitySize::new(entity_size));
         world.add_resource(EntityMesh::new(entity_size, ctx)?);
+        world.add_resource(entity_size_resource);
         world.add_resource(FPS(target_fps));
 
         world.register_component::<Location>();
         world.register_component::<Velocity>();
         world.register_component::<Acceleration>();
-        world
-            .create_entity()
-            .with_component(Location(Vector2::new(
-                arena_size.width / 2.0,
-                arena_size.height / 2.0,
-            )))?
-            .with_component(Velocity(Vector2::zero()))?
-            .with_component(Acceleration(Vector2::zero()))?;
+        world.register_component::<Speed>();
+
+        for _ in 0..humans_count {
+            world
+                .create_entity()
+                .with_component(Location(Vector2::new_random_range(
+                    entity_size_resource.half(),
+                    arena_size.width - entity_size_resource.half(),
+                )))?
+                .with_component(Velocity(Vector2::zero()))?
+                .with_component(Acceleration(Vector2::zero()))?
+                .with_component(Speed(0.3))?;
+        }
 
         Ok(Self { world })
     }

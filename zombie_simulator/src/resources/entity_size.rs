@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct EntitySize(f32);
 
 impl EntitySize {

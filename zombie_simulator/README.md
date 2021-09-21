@@ -8,6 +8,7 @@
 - background_color
 - clicked_location Option(x, y)
 - entity_size
+- entity_mesh
 - sight_range
 
 ## Systems
@@ -52,14 +53,14 @@ color
 ```
 
 # Stories
-- [ ] Setup
-    - [ ] Arena is drawn
+- [x] Setup
+    - [x] Arena is drawn
 - [ ] Humans
-    - [ ] Humans move randomly around the arena
+    - [x] Humans move randomly around the arena
     - [ ] Humans are attracted to each other
     - [ ] Humans are repelled from each other
     - [ ] Humans are attracted to the average velocity of the group
-    - [ ] Humans stop at the edge of the arena
+    - [x] Humans stop at the edge of the arena
     - [ ] Humans move away from zombies they can see
 - [ ] Zombies
     - [ ] A zombie can be created with a mouse click or a keyboard press
@@ -74,3 +75,4 @@ color
 - [rand](https://crates.io/crates/rand)
 - [eyre](https://crates.io/crates/eyre)
 - [ggez](https://crates.io/crates/ggez)
+- [jecs](https://crates.io/crates/jecs)
