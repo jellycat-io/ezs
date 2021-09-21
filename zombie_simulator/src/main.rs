@@ -17,7 +17,7 @@ fn main() -> Result<()> {
     let background_color = Color::from_rgb(29, 43, 83);
     let entity_size = 15.0;
 
-    let main_state = MainState::new(arena_size, background_color, entity_size, &mut ctx)?;
+    let main_state = MainState::new(arena_size, background_color, entity_size, 60, &mut ctx)?;
 
     event::run(ctx, event_loop, main_state);
 }

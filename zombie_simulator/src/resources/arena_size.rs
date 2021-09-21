@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct ArenaSize {
 	pub width: f32,
 	pub height: f32

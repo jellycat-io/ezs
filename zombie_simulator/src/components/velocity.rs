@@ -2,9 +2,9 @@ use crate::data_structures::vector2::Vector2;
 use std::ops::{Deref, DerefMut};
 
 #[derive(Debug)]
-pub struct Location(pub Vector2);
+pub struct Velocity(pub Vector2);
 
-impl Deref for Location {
+impl Deref for Velocity {
     type Target = Vector2;
 
     fn deref(&self) -> &Self::Target {
@@ -12,7 +12,7 @@ impl Deref for Location {
     }
 }
 
-impl DerefMut for Location {
+impl DerefMut for Velocity {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
