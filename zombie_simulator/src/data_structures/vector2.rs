@@ -10,6 +10,10 @@ impl Vector2 {
 	pub fn new(x: f32, y: f32) -> Self {
 		Self { x, y }
 	}
+
+	pub fn to_mint_vector2(&self) -> ggez::mint::Vector2<f32> {
+		ggez::mint::Vector2 { x: self.x, y: self.y }
+	}
 }
 
 impl Add for Vector2 {

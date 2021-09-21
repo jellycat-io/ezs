@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum JellyEcsError {
+pub enum JecsError {
     #[error("Attempted to add a component to an entity without calling create_entity first")]
     CreateEntityNeverCalled,
     #[error("Attempted to reference a component that wasn't registered")]

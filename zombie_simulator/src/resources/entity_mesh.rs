@@ -1,9 +1,10 @@
 use ggez::graphics::{Mesh, MeshBuilder, DrawMode, Color};
 use eyre::Result;
 use ggez::Context;
+use std::ops::Deref;
 
 #[derive(Debug)]
-pub struct EntityMesh(Mesh);
+pub struct EntityMesh(pub Mesh);
 
 impl EntityMesh {
 	pub fn new(radius: f32, ctx: &mut Context) -> Result<Self> {
@@ -12,5 +13,13 @@ impl EntityMesh {
 			.build(ctx)?;
 
 		Ok(Self(mesh))
+	}
+}
+
+impl Deref for EntityMesh {
+	type Target = Mesh;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
 	}
 }

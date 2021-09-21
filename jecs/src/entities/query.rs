@@ -1,15 +1,24 @@
 use super::Entities;
 use crate::entities::Component;
-use crate::errors::JellyEcsError;
+use crate::errors::JecsError;
 use eyre::Result;
 use std::any::{Any, TypeId};
 
 pub type QueryIndexes = Vec<usize>;
 pub type QueryComponents = Vec<Vec<Component>>;
 
+pub struct QueryResult {
+    pub indexes: QueryIndexes,
+    pub result: QueryComponents
+}
+
+impl QueryResult {
+    pub fn new(indexes: QueryIndexes, result: QueryComponents) -> Self { Self { indexes, result } }
+}
+
 #[derive(Debug)]
 pub struct Query<'a> {
-    map: u32,
+    bitmap: u32,
     entities: &'a Entities,
     type_ids: Vec<TypeId>,
 }
@@ -18,7 +27,7 @@ impl<'a> Query<'a> {
     pub fn new(entities: &'a Entities) -> Self {
         Self {
             entities,
-            map: 0,
+            bitmap: 0,
             type_ids: vec![],
         }
     }
@@ -26,23 +35,23 @@ impl<'a> Query<'a> {
     pub fn with_component<T: Any>(&mut self) -> Result<&mut Self> {
         let type_id = TypeId::of::<T>();
         if let Some(bit_mask) = self.entities.get_bit_mask(&type_id) {
-            self.map |= bit_mask;
+            self.bitmap |= bit_mask;
             self.type_ids.push(type_id);
         } else {
-            return Err(JellyEcsError::ComponentNotRegistered.into());
+            return Err(JecsError::ComponentNotRegistered.into());
         }
 
         Ok(self)
     }
 
-    pub fn run(&self) -> (QueryIndexes, QueryComponents) {
+    pub fn run(&self) -> QueryResult {
         let indexes: Vec<usize> = self
             .entities
-            .map
+            .bitmap
             .iter()
             .enumerate()
             .filter_map(|(index, entity_map)| {
-                if entity_map & self.map == self.map {
+                if entity_map & self.bitmap == self.bitmap {
                     Some(index)
                 } else {
                     None
@@ -62,7 +71,7 @@ impl<'a> Query<'a> {
             result.push(components_to_keep);
         }
 
-        (indexes, result)
+        QueryResult::new(indexes, result)
     }
 }
 
@@ -79,7 +88,7 @@ mod test {
         let mut query = Query::new(&entities);
         query.with_component::<u32>()?.with_component::<f32>()?;
 
-        assert_eq!(query.map, 3);
+        assert_eq!(query.bitmap, 3);
         assert_eq!(TypeId::of::<u32>(), query.type_ids[0]);
         assert_eq!(TypeId::of::<f32>(), query.type_ids[1]);
         Ok(())
@@ -103,14 +112,14 @@ mod test {
             .with_component(16_u32)?
             .with_component(64.0_f32)?;
 
-        let mut query = Query::new(&entities);
-        let query_result = query
+        let query = Query::new(&entities)
             .with_component::<u32>()?
             .with_component::<f32>()?
             .run();
-        let u32s = &query_result.1[0];
-        let f32s = &query_result.1[1];
-        let indexes = &query_result.0;
+
+        let u32s = &query.result[0];
+        let f32s = &query.result[1];
+        let indexes = &query.indexes;
 
         assert!(u32s.len() == f32s.len() && u32s.len() == indexes.len());
         assert_eq!(u32s.len(), 2);

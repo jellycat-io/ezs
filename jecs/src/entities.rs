@@ -1,4 +1,4 @@
-use crate::errors::JellyEcsError;
+use crate::errors::JecsError;
 use eyre::Result;
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
@@ -14,7 +14,7 @@ pub type Components = HashMap<TypeId, Vec<Option<Component>>>;
 pub struct Entities {
     components: Components,
     bit_masks: HashMap<TypeId, u32>,
-    map: Vec<u32>,
+    bitmap: Vec<u32>,
     inserting_into_index: usize,
 }
 
@@ -30,7 +30,7 @@ impl Entities {
 
     pub fn create_entity(&mut self) -> &mut Self {
         if let Some((index, _)) = self
-            .map
+            .bitmap
             .iter()
             .enumerate()
             .find(|(_index, mask)| **mask == 0)
@@ -40,8 +40,8 @@ impl Entities {
             self.components
                 .iter_mut()
                 .for_each(|(_, components)| components.push(None));
-            self.map.push(0);
-            self.inserting_into_index = self.map.len() - 1;
+            self.bitmap.push(0);
+            self.inserting_into_index = self.bitmap.len() - 1;
         }
 
         self
@@ -53,14 +53,14 @@ impl Entities {
         if let Some(components) = self.components.get_mut(&type_id) {
             let component = components
                 .get_mut(index)
-                .ok_or(JellyEcsError::CreateEntityNeverCalled)?;
+                .ok_or(JecsError::CreateEntityNeverCalled)?;
             *component = Some(Rc::new(RefCell::new(data)));
-
-            let bit_mask = self.bit_masks.get(&type_id).unwrap();
-            self.map[index] |= *bit_mask;
         } else {
-            return Err(JellyEcsError::ComponentNotRegistered.into());
+            return Err(JecsError::ComponentNotRegistered.into());
         }
+
+        let bit_mask = self.bit_masks.get(&type_id).unwrap();
+        self.bitmap[index] |= *bit_mask;
 
         Ok(self)
     }
@@ -74,10 +74,10 @@ impl Entities {
         let mask = if let Some(mask) = self.bit_masks.get(&type_id) {
             mask
         } else {
-            return Err(JellyEcsError::ComponentNotRegistered.into());
+            return Err(JecsError::ComponentNotRegistered.into());
         };
 
-        self.map[index] ^= *mask;
+        self.bitmap[index] ^= *mask;
 
         Ok(())
     }
@@ -86,10 +86,10 @@ impl Entities {
         let mask = if let Some(mask) = self.bit_masks.get(&data.type_id()) {
             mask
         } else {
-            return Err(JellyEcsError::ComponentNotRegistered.into());
+            return Err(JecsError::ComponentNotRegistered.into());
         };
 
-        self.map[index] |= *mask;
+        self.bitmap[index] |= *mask;
 
         let components = self.components.get_mut(&data.type_id()).unwrap();
         components[index] = Some(Rc::new(RefCell::new(data)));
@@ -98,10 +98,10 @@ impl Entities {
     }
 
     pub fn delete_entity_by_id(&mut self, index: usize) -> Result<()> {
-        if let Some(map) = self.map.get_mut(index) {
+        if let Some(map) = self.bitmap.get_mut(index) {
             *map = 0;
         } else {
-            return Err(JellyEcsError::EntityDoesNotExist.into());
+            return Err(JecsError::EntityDoesNotExist.into());
         }
 
         Ok(())
@@ -114,7 +114,7 @@ mod tests {
     use std::any::TypeId;
 
     #[test]
-    fn register_entity() {
+    fn register_component() {
         let mut entities = Entities::new();
         entities.register_component::<Health>();
         let health_components = entities.components.get(&TypeId::of::<Health>()).unwrap();
@@ -177,11 +177,11 @@ mod tests {
             .with_component(Health(100))?
             .with_component(Speed(16.0))?;
 
-        let entity_map = entities.map[0];
+        let entity_map = entities.bitmap[0];
         assert_eq!(entity_map, 3);
 
         entities.create_entity().with_component(Speed(20.0))?;
-        let entity_map = entities.map[1];
+        let entity_map = entities.bitmap[1];
         assert_eq!(entity_map, 2);
 
         Ok(())
@@ -199,7 +199,7 @@ mod tests {
 
         entities.delete_component_by_entity_id::<Health>(0)?;
 
-        assert_eq!(entities.map[0], 2);
+        assert_eq!(entities.bitmap[0], 2);
         Ok(())
     }
 
@@ -213,7 +213,7 @@ mod tests {
 
         entities.add_component_by_entity_id(Speed(16.0), 0)?;
 
-        assert_eq!(entities.map[0], 3);
+        assert_eq!(entities.bitmap[0], 3);
 
         let wrapped_speeds = entities.components.get(&TypeId::of::<Speed>()).unwrap();
         let wrapped_speed = wrapped_speeds[0].as_ref().unwrap();
@@ -231,7 +231,7 @@ mod tests {
         entities.register_component::<Health>();
         entities.create_entity().with_component(Health(100))?;
         entities.delete_entity_by_id(0)?;
-        assert_eq!(entities.map[0], 0);
+        assert_eq!(entities.bitmap[0], 0);
         Ok(())
     }
 
@@ -244,7 +244,7 @@ mod tests {
         entities.delete_entity_by_id(0)?;
         entities.create_entity().with_component(Health(300))?;
 
-        assert_eq!(entities.map[0], 1);
+        assert_eq!(entities.bitmap[0], 1);
 
         let borrowed_health = entities.components.get(&TypeId::of::<Health>()).unwrap()[0]
             .as_ref()

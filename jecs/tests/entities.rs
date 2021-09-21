@@ -1,5 +1,5 @@
 use eyre::Result;
-use jecs::World;
+use jecs ::World;
 
 #[test]
 fn create_entity() -> Result<()> {
@@ -39,8 +39,8 @@ fn query_for_entities() -> Result<()> {
         .with_component::<Size>()?
         .run();
 
-    let locations = &query.1[0];
-    let sizes = &query.1[1];
+    let locations = &query.result[0];
+    let sizes = &query.result[1];
 
     assert_eq!(locations.len(), 2);
     assert_eq!(sizes.len(), 2);
@@ -88,8 +88,8 @@ fn delete_component_from_entity() -> Result<()> {
         .with_component::<Size>()?
         .run();
 
-    assert_eq!(query.0.len(), 1);
-    assert_eq!(query.0[0], 1);
+    assert_eq!(query.indexes.len(), 1);
+    assert_eq!(query.indexes[0], 1);
 
     Ok(())
 }
@@ -110,7 +110,7 @@ fn add_component_to_entity() -> Result<()> {
         .with_component::<Size>()?
         .run();
 
-    assert_eq!(query.0.len(), 1);
+    assert_eq!(query.indexes.len(), 1);
     Ok(())
 }
 
@@ -128,9 +128,9 @@ fn delete_entity() -> Result<()> {
     world.delete_entity_by_id(0)?;
 
     let query = world.query().with_component::<Location>()?.run();
-    assert_eq!(query.0.len(), 1);
+    assert_eq!(query.indexes.len(), 1);
 
-    let borrowed_location = query.1[0][0].borrow();
+    let borrowed_location = query.result[0][0].borrow();
     let location = borrowed_location.downcast_ref::<Location>().unwrap();
     assert_eq!(location.0, 32.0);
 
@@ -139,9 +139,9 @@ fn delete_entity() -> Result<()> {
         .with_component(Location(64.0, 256.0))?;
 
     let query = world.query().with_component::<Location>()?.run();
-    assert_eq!(query.0.len(), 2);
+    assert_eq!(query.indexes.len(), 2);
 
-    let borrowed_location = query.1[0][0].borrow();
+    let borrowed_location = query.result[0][0].borrow();
     let location = borrowed_location.downcast_ref::<Location>().unwrap();
     assert_eq!(location.0, 64.0);
     Ok(())
