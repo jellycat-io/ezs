@@ -1,9 +1,12 @@
-use crate::components::acceleration::Acceleration;
-use crate::components::speed::Speed;
-use crate::data_structures::vector2::Vector2;
 use eyre::Result;
+
 use jecs::errors::JecsError;
 use jecs::World;
+
+use crate::components::acceleration::Acceleration;
+use crate::components::human::Human;
+use crate::components::speed::Speed;
+use crate::data_structures::vector2::Vector2;
 
 pub struct RandomlyWalk;
 
@@ -13,6 +16,7 @@ impl RandomlyWalk {
             .query()
             .with_component::<Acceleration>()?
             .with_component::<Speed>()?
+            .with_component::<Human>()?
             .run();
 
         let accelerations = query.result[0].clone();

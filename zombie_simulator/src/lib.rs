@@ -7,6 +7,8 @@ use config::Config;
 use jecs::World;
 
 use crate::components::color::Color;
+use crate::components::human::Human;
+use crate::components::visible_sight_range::VisibleSightRange;
 use crate::components::{
     acceleration::Acceleration, location::Location, sight_range::SightRange, speed::Speed,
     velocity::Velocity,
@@ -54,19 +56,26 @@ impl MainState {
         world.register_component::<Speed>();
         world.register_component::<SightRange>();
         world.register_component::<Color>();
+        world.register_component::<Human>();
+        world.register_component::<VisibleSightRange>();
 
-        for _ in 0..config.humans_count {
+        for index in 0..config.humans_count {
             world
                 .create_entity()
                 .with_component(Location(Vector2::new_random_range(
                     entity_size_resource.half(),
                     config.arena_size.width - entity_size_resource.half(),
                 )))?
-                .with_component(Velocity(Vector2::zero()))?
-                .with_component(Acceleration(Vector2::zero()))?
+                .with_component(Velocity::new())?
+                .with_component(Acceleration::new())?
                 .with_component(Speed(config.human_speed))?
                 .with_component(SightRange(config.human_sight_range))?
-                .with_component(Color(Palette::white()))?;
+                .with_component(Color(Palette::white()))?
+                .with_component(Human)?;
+
+            if index == 0 {
+                world.add_component_by_entity_id(VisibleSightRange, index as usize)?;
+            }
         }
 
         Ok(Self { world })
@@ -84,7 +93,7 @@ impl EventHandler<GameError> for MainState {
             ResetAcceleration::run(&self.world).unwrap();
             ContainInBounds::run(&self.world).unwrap();
             HumanRepulsion::run(&self.world).unwrap();
-            InsertZombie::run(&mut self.world);
+            InsertZombie::run(&mut self.world).unwrap();
         }
 
         Ok(())

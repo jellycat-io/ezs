@@ -1,8 +1,15 @@
-use crate::data_structures::vector2::Vector2;
 use std::ops::{Deref, DerefMut};
+
+use crate::data_structures::vector2::Vector2;
 
 #[derive(Debug)]
 pub struct Velocity(pub Vector2);
+
+impl Velocity {
+    pub fn new() -> Self {
+        Self(Vector2::zero())
+    }
+}
 
 impl Deref for Velocity {
     type Target = Vector2;
