@@ -58,7 +58,7 @@ color
 - [ ] Humans
     - [x] Humans move randomly around the arena
     - [ ] Humans are attracted to each other
-    - [ ] Humans are repelled from each other
+    - [x] Humans are repelled from each other
     - [ ] Humans are attracted to the average velocity of the group
     - [x] Humans stop at the edge of the arena
     - [ ] Humans move away from zombies they can see

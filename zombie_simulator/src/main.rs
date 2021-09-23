@@ -1,11 +1,11 @@
 use eyre::Result;
 use ggez::conf::WindowMode;
 use ggez::event::{self};
-use ggez::graphics::Color;
 use ggez::ContextBuilder;
 
 use zombie_simulator::config::Config;
 use zombie_simulator::resources::arena_size::ArenaSize;
+use zombie_simulator::utils::palette::Palette;
 use zombie_simulator::MainState;
 
 fn main() -> Result<()> {
@@ -19,7 +19,7 @@ fn main() -> Result<()> {
 
     let config = Config {
         arena_size: ArenaSize::new(1024.0, 1024.0),
-        background_color: Color::from_rgb(29, 43, 83),
+        background_color: Palette::black(),
         entity_size,
         humans_count: 100,
         human_speed: 0.15,

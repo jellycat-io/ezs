@@ -1,11 +1,12 @@
 use eyre::Result;
-use ggez::event::EventHandler;
+use ggez::event::{EventHandler, MouseButton};
 use ggez::graphics;
 use ggez::{Context, GameError, GameResult};
 
 use config::Config;
 use jecs::World;
 
+use crate::components::color::Color;
 use crate::components::{
     acceleration::Acceleration, location::Location, sight_range::SightRange, speed::Speed,
     velocity::Velocity,
@@ -16,17 +17,20 @@ use crate::resources::{
     entity_size::EntitySize, fps::FPS,
 };
 use crate::systems::human_repulsion::HumanRepulsion;
+use crate::systems::insert_zombie::InsertZombie;
 use crate::systems::{
     contain_in_bounds::ContainInBounds, draw_entities::DrawEntities, randomly_walk::RandomlyWalk,
     reset_acceleration::ResetAcceleration, update_location::UpdateLocation,
     update_velocity::UpdateVelocity, visualize_sight_range::VisualizeSightRange,
 };
+use crate::utils::palette::Palette;
 
 pub mod components;
 pub mod config;
 pub mod data_structures;
 pub mod resources;
 pub mod systems;
+pub mod utils;
 
 #[derive(Debug)]
 pub struct MainState {
@@ -39,7 +43,7 @@ impl MainState {
         let entity_size_resource = EntitySize::new(config.entity_size);
         world.add_resource(config.arena_size);
         world.add_resource(BackgroundColor(config.background_color));
-        world.add_resource(ClickedLocation::new());
+        world.add_resource(ClickedLocation(None));
         world.add_resource(EntityMesh::new(config.entity_size, ctx)?);
         world.add_resource(entity_size_resource);
         world.add_resource(FPS(config.target_fps));
@@ -49,6 +53,7 @@ impl MainState {
         world.register_component::<Acceleration>();
         world.register_component::<Speed>();
         world.register_component::<SightRange>();
+        world.register_component::<Color>();
 
         for _ in 0..config.humans_count {
             world
@@ -60,7 +65,8 @@ impl MainState {
                 .with_component(Velocity(Vector2::zero()))?
                 .with_component(Acceleration(Vector2::zero()))?
                 .with_component(Speed(config.human_speed))?
-                .with_component(SightRange(config.human_sight_range))?;
+                .with_component(SightRange(config.human_sight_range))?
+                .with_component(Color(Palette::white()))?;
         }
 
         Ok(Self { world })
@@ -69,15 +75,16 @@ impl MainState {
 
 impl EventHandler<GameError> for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        let fps = self.world.get_resource::<FPS>().unwrap();
+        let fps = **self.world.get_resource::<FPS>().unwrap();
 
-        while ggez::timer::check_update_time(ctx, **fps) {
+        while ggez::timer::check_update_time(ctx, fps) {
             RandomlyWalk::run(&self.world).unwrap();
             UpdateVelocity::run(&self.world).unwrap();
             UpdateLocation::run(&self.world).unwrap();
             ResetAcceleration::run(&self.world).unwrap();
             ContainInBounds::run(&self.world).unwrap();
             HumanRepulsion::run(&self.world).unwrap();
+            InsertZombie::run(&mut self.world);
         }
 
         Ok(())
@@ -92,5 +99,12 @@ impl EventHandler<GameError> for MainState {
         DrawEntities::run(&self.world, ctx).unwrap();
         VisualizeSightRange::run(&self.world, ctx).unwrap();
         graphics::present(ctx)
+    }
+
+    fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: MouseButton, x: f32, y: f32) {
+        let clicked_location = self.world.get_resource_mut::<ClickedLocation>().unwrap();
+        if let MouseButton::Left = button {
+            clicked_location.set(x, y);
+        }
     }
 }
