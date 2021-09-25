@@ -3,6 +3,12 @@ use std::ops::{Deref, DerefMut};
 #[derive(Debug)]
 pub struct SightRange(pub f32);
 
+impl SightRange {
+    pub fn get(&self) -> f32 {
+        self.0
+    }
+}
+
 impl Deref for SightRange {
     type Target = f32;
 

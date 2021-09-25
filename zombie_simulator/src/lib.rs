@@ -9,6 +9,7 @@ use jecs::World;
 use crate::components::color::Color;
 use crate::components::human::Human;
 use crate::components::visible_sight_range::VisibleSightRange;
+use crate::components::zombie::Zombie;
 use crate::components::{
     acceleration::Acceleration, location::Location, sight_range::SightRange, speed::Speed,
     velocity::Velocity,
@@ -20,6 +21,7 @@ use crate::resources::{
 };
 use crate::systems::human_repulsion::HumanRepulsion;
 use crate::systems::insert_zombie::InsertZombie;
+use crate::systems::zombie_attraction::ZombieAttraction;
 use crate::systems::{
     contain_in_bounds::ContainInBounds, draw_entities::DrawEntities, randomly_walk::RandomlyWalk,
     reset_acceleration::ResetAcceleration, update_location::UpdateLocation,
@@ -57,6 +59,7 @@ impl MainState {
         world.register_component::<SightRange>();
         world.register_component::<Color>();
         world.register_component::<Human>();
+        world.register_component::<Zombie>();
         world.register_component::<VisibleSightRange>();
 
         for index in 0..config.humans_count {
@@ -94,6 +97,7 @@ impl EventHandler<GameError> for MainState {
             ContainInBounds::run(&self.world).unwrap();
             HumanRepulsion::run(&self.world).unwrap();
             InsertZombie::run(&mut self.world).unwrap();
+            ZombieAttraction::run(&self.world).unwrap();
         }
 
         Ok(())

@@ -4,6 +4,7 @@ use jecs::errors::JecsError;
 use jecs::World;
 
 use crate::components::acceleration::Acceleration;
+use crate::components::human::Human;
 use crate::components::location::Location;
 use crate::components::sight_range::SightRange;
 use crate::components::speed::Speed;
@@ -18,6 +19,7 @@ impl HumanRepulsion {
             .with_component::<Speed>()?
             .with_component::<Acceleration>()?
             .with_component::<SightRange>()?
+            .with_component::<Human>()?
             .run();
 
         let locations = query.result[0].clone();

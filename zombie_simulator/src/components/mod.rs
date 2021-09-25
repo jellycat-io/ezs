@@ -6,3 +6,4 @@ pub mod sight_range;
 pub mod speed;
 pub mod velocity;
 pub mod visible_sight_range;
+pub mod zombie;
